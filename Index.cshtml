@@ -1,0 +1,172 @@
+﻿@model IEnumerable<JqueryDataTable.Models.Student>
+
+@{
+    ViewData["Title"] = "Index";
+}
+
+<h1>Student</h1>
+<div class="content-wrapper">
+    <table class="table table-striped table-bordered" id="student_dataTable" style="width:100%">
+    </table>
+
+</div> 
+
+  
+    <script>
+    $.ajax({
+        url: 'Student/GetStudent',
+        type: 'GET',
+        dataType: 'json',
+        
+     
+        success: function (response) {
+            //console.log(JSON.stringify(response));
+            var Mycolumns = new Array();
+            var TableHeader = "<thead class='bg-gradient-lightblue'><tr>";
+            var footer = "<tfoot><tr>"
+            for (var key in response[0]) {
+                var myObj = new Object();
+                myObj.data = key;
+                Mycolumns.push(myObj);
+                TableHeader += "<th>" + key + "</th>"
+                footer += "<th></th>"
+            }
+
+            TableHeader += "</thead></tr>";
+            footer += "</tfoot></tr>";
+
+
+            $("#student_dataTable").append(TableHeader);
+            $("#student_dataTable").append(footer);
+            var numberRenderer = $('#student_dataTable').dataTable.render.number(',', '.', 2,).display;
+            $('#student_dataTable').DataTable({
+
+                columns: Mycolumns,
+                data: response,
+
+                "autoWidth": true,
+                "responsive": true,
+                "aaSorting": [],
+                aLengthMenu: [
+                    [25, 50, 100, 200, -1],
+                    [25, 50, 100, 200, "All"]
+                ],
+
+                iDisplayLength: 50,
+                order: [[2, 'desc']],
+                rowGroup: {
+                    dataSrc: 'department',
+                    endRender: function (rows, group) {
+                        var intVal = function (i) {
+                            return typeof i === 'string' ?
+                                i.replace(/[\$,]/g, '') * 1 :
+                                typeof i === 'number' ?
+                                    i : 0;
+                        };
+                        var avg = rows
+                            .data()
+                            .pluck(4)
+                            .reduce(function (a, b) {
+                                return intVal(a) + intVal(b);
+                            }, 0) / rows.count();
+
+
+                        return 'sum of marks in ' + group + ': ' +
+                            $.fn.dataTable.render.number(',', '.', 0, '$').display(avg);
+                    },
+                },
+                //dom: 'Blfrtip',
+                dom: 'lBfrtip',
+
+                "footerCallback": function (row, data, start, end, display, rows, group) {
+                    var api = this.api(), data;
+                    var intVal = function (i) {
+                        return typeof i === 'string' ?
+                            i.replace(/[\$,]/g, '') * 1 :
+                            typeof i === 'number' ?
+                                i : 0;
+                    };
+
+                    api.columns().every(function () {
+                        var column = this;
+                        var Counter = 0;
+
+                        sum = column
+                            .data({ search: 'applied' })
+                            .reduce(function (a, b) {
+                                Counter++;
+                                return intVal(a) + intVal(b);
+                            }, 0).toFixed(2);
+
+                        pagesum = api.column(column, { page: 'current' })
+                            .data({ search: 'applied' })
+                            .reduce(function (a, b) {
+                                return intVal(a) + intVal(b);
+                            }, 0).toFixed(2);
+                        Average = sum / Counter;
+
+
+                        $(api.column(0).footer()).html('<b>PageTotal:<hr>Total:<hr>Average:</b>');
+                        if (!isNaN(sum) && !isNaN(pagesum)) {
+                            $(column.footer()).html(
+                                '<b>' + numberRenderer(pagesum) + '<hr>' + numberRenderer(sum) + '<hr>' + numberRenderer(Average) + '</b>'
+                            );
+                        }
+                        else {
+                            $(column.footer()).html('<b></b>');
+                        }
+                    });
+
+                },
+
+
+                
+               
+                
+                
+
+           
+                buttons: [
+                    {
+                        extend: 'copy'
+                        , title: 'MachineWise'
+                        , className: 'btn bg-gradient-lightblue'
+                        , text: '<div style="font-weight:bold"><i class="far fa-copy"></i> Copy'
+                        , footer: true
+                    },
+                    {
+                        extend: 'csv'
+                        , title: 'MachineWise'
+                        , className: 'btn bg-gradient-lightblue'
+                        , text: '<div style="font-weight:bold"><i class="far fa-file-excel"></i> Csv'
+                        , footer: true
+                    },
+                    {
+                        extend: 'excel'
+                        , title: 'MachineWise'
+                        , filename: 'Test_MachineWise'
+                        , className: 'btn bg-gradient-lightblue'
+                        , text: '<div style="font-weight:bold"><i class="far fa-file-excel"></i> Excel'
+                        , footer: true
+                    },
+                    {
+                        extend: 'pdf'
+                        , title: 'MachineWise'
+                        , className: 'btn bg-gradient-lightblue'
+                        , text: '<div style="font-weight:bold"><i class="far fa-file-pdf"></i> Pdf'
+                        , footer: true
+                    },
+                    {
+                        extend: 'print'
+                        , title: 'MachineWise'
+                        , className: 'btn bg-gradient-lightblue'
+                        , text: '<div style="font-weight:bold"><i class="fas fa-print"></i> Print'
+                        , footer: true
+                    },
+                ]
+            });
+
+        },
+    });
+    </script>
+
